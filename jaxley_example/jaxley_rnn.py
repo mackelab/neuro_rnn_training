@@ -19,16 +19,13 @@ def build_rnn(RNN_params,verbose=True):
     n_out = RNN_params["n_out"]
     init_gain=RNN_params["init_gain"]
     leak_out = True
-    tau = 100
 
     net = jx.Network([cell for _ in range(num_cells)])
-    pre = net.cell(range(num_cells-n_out))
-    post = net.cell(range(num_cells-n_out))
+    rec = net.cell(range(num_cells-n_out))
     readout = net.cell([range(num_cells-n_out, num_cells)])
-    #fully_connect(pre, post, IonotropicSynapse())
     negative_inds = np.arange(n_inh).tolist()
     rec_conn_prob=.2
-    # Connect the somas to the apical dendrites
+    # Connect units randomly
     for i in range(num_cells-n_out):
         for j in range(num_cells-n_out):
             if np.random.binomial(1, rec_conn_prob):
@@ -37,20 +34,9 @@ def build_rnn(RNN_params,verbose=True):
                     net.cell(j).branch(0).comp(0),
                     IonotropicSynapse(),
                 )
-
-    fully_connect(pre, readout, IonotropicSynapse())
+    # Connect the readout units
+    fully_connect(rec, readout, IonotropicSynapse())
             
-    conn_matrix = init_inh_ex_gS(
-        net,
-        negative_inds,
-        init_gain,
-        out_indices=[num_cells, num_cells + 1],
-        out_scale=RNN_params['out_scale'],
-        return_matrix=True,
-        dist="normal",
-    )
-
-
 
     # Insert mechanisms
     for i in range(num_cells - n_out):
@@ -58,8 +44,6 @@ def build_rnn(RNN_params,verbose=True):
     for i in range(n_out):
         if leak_out:
             net.cell(num_cells - n_out + i).insert(Leak())
-            #net.cell(num_cells - 1).set("Leak_gl", 1 / (1000 * tau))
-            #net.cell(num_cells - 1).set("Leak_el", -70)
             net.cell(num_cells - n_out + i).set("Leak_gLeak", 3e-2)
             if verbose:
                 print("Leak out")
@@ -71,15 +55,15 @@ def build_rnn(RNN_params,verbose=True):
 
 
     negative_inds = np.arange(n_inh).tolist()
-    conn_matrix = init_inh_ex_gS(net, negative_inds, init_gain, return_matrix=True, verbose=verbose)
+    conn_matrix = init_inh_ex_gS(net, negative_inds, init_gain, out_indices=[i for i in range(num_cells - n_out, num_cells)],
+                                  return_matrix=True, verbose=verbose)
 
     # Set some parameters
     net.set("IonotropicSynapse_k_minus", RNN_params["k_minus"]) 
-
     net.set("v", -67.0)
     net.init_states()
 
-
+    # Initialize input weights
     n_inp = RNN_params['n_stim'] + 1 #stimuli and fixation
     input_weights = abs(np.random.uniform(0, 1, size = (n_rec,n_inp))) * RNN_params['inp_scale']
     in_conn_prob= RNN_params['in_conn_prob']
@@ -92,7 +76,6 @@ def build_rnn(RNN_params,verbose=True):
     else:
         input_weights_mask = np.ones((n_rec,n_inp))
     input_weights = [{"input_weights": jnp.asarray(input_weights)}]
-
 
     return net, conn_matrix, input_weights,input_weights_mask
 
