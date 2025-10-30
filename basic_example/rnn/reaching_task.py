@@ -17,7 +17,6 @@ class Reaching(Dataset):
 
 
     def __len__(self):
-        """Arbitrary number of trials, as they are randomly generated anyway"""
         return self.task_params['n_stim']
 
     def __getitem__(self, idx):

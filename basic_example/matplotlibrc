@@ -49,4 +49,3 @@ svg.image_inline     : True
 svg.fonttype         : none
 
 legend.frameon       : False
-axes.prop_cycle: cycler('color',['ffc946', 'fd8d21', 'e31a1c', '8e170f'])
