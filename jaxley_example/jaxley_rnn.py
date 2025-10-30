@@ -61,10 +61,12 @@ def build_rnn(RNN_params,verbose=True):
             #net.cell(num_cells - 1).set("Leak_gl", 1 / (1000 * tau))
             #net.cell(num_cells - 1).set("Leak_el", -70)
             net.cell(num_cells - n_out + i).set("Leak_gLeak", 3e-2)
-            print("Leak out")
+            if verbose:
+                print("Leak out")
         else:
             net.cell(num_cells - n_out + i).insert(HH())
-            print("HH out")
+            if verbose:
+                print("HH out")
 
 
 
