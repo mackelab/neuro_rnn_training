@@ -50,28 +50,45 @@ def ce(pred, label, mask):
         mask:  (T,1)
     """
     probs = softmax(pred, axis=1)  # softmax over classes at each time
-    log_likelihood = jnp.sum(label * jnp.log(probs), axis=1)  # (T,)
+    log_likelihood = jnp.sum(label * jnp.log(probs), axis=1)
     mask = mask.squeeze(-1)
     loss = -jnp.sum(mask * log_likelihood) / jnp.sum(mask)
     return loss
 
 
+import jax.numpy as jnp
+
 def accuracy(pred, label, mask):
     """
-    Compute accuracy for a single trial.
-    Args:
-        pred:  (T, n_classes)
-        label: (T, n_classes)
-        mask:  (T, 1)
-    """
-    probs = softmax(pred, axis=1)
-    pred_class = jnp.argmax(probs, axis=1)   # (T,)
-    true_class = jnp.argmax(label, axis=1)   # (T,)
+    Compute accuracy for a single trial using masked average probabilities.
 
-    mask = mask.squeeze(-1)
-    correct = (pred_class == true_class) * mask
-    acc = jnp.sum(correct) / jnp.sum(mask)
-    return acc
+    Args:
+        pred:  (T, n_classes) - model predictions
+        label: (T, n_classes) - one-hot labels
+        mask:  (T, 1) - mask for valid time steps (1 = valid, 0 = ignore)
+
+    Returns:
+        acc: scalar accuracy
+    """
+
+    mask = mask.squeeze(-1)  # (T,)
+    pred = softmax(pred, axis=1)  # (T, n_classes)
+    
+    # Weighted sum of predicted probabilities over valid time steps
+    masked_pred = pred * mask[:, None]  # (T, n_classes)
+    avg_pred = jnp.sum(masked_pred, axis=0) / jnp.sum(mask)  # (n_classes,)
+
+    # Weighted sum of labels over valid time steps
+    masked_label = label * mask[:, None]
+    avg_label = jnp.sum(masked_label, axis=0) / jnp.sum(mask)
+
+    # Predicted class = class with highest average probability
+    pred_class = jnp.argmax(avg_pred)
+    true_class = jnp.argmax(avg_label)
+
+    correct = (pred_class == true_class)
+    
+    return correct.astype(jnp.float32)
 
 
 

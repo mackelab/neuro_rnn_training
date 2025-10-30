@@ -1,6 +1,8 @@
-# pyrnn
-General code for training recurrent neural networks for neuroscience with pytorch
+### neuro_rnn_training
 
-To train an RNN model, install the conda environment: 
-```conda env create -f pyrnn.yml```, activate it and open one of the notebooks in the tutorials folder
-# neuro_rnn_training
+Contains one easy example: basic_example/train_reach.ipynb
+
+And one harder to train network in jaxley_example/train_jaxley.ipynb
+
+you can use the provided conda environment: 
+```conda env create -f neuro_rnn.yml```
