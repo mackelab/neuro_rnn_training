@@ -26,9 +26,9 @@ def simulate(params, stim, input_weights_mask, net, dt=0.025, levels=3):
     )
     return v
 
-def predict(opt_params, stim):
+def predict(opt_params, stim, input_weights_mask, net, dt=0.025, levels=3):
     """extract prediction (readout units activation)"""
-    v = simulate(opt_params, stim)
+    v = simulate(opt_params, stim, input_weights_mask, net, dt=dt, levels=levels)
     n_classes = stim.shape[1] - 1  # last input is fixation
     return ((v[-n_classes:])).T
 
@@ -73,21 +73,6 @@ def accuracy(pred, label, mask):
     acc = jnp.sum(correct) / jnp.sum(mask)
     return acc
 
-def loss_fn(opt_params, stim, label, mask, tf):
-    """Compute loss and accuracy for optimization.
-    Args:
-        opt_params: parameters in the transformed space
-        stim:  (T-1, n_classes+1)
-        label: (T, n_classses)
-        mask:  (T, 1)
-    """
-#
-
-    params = tf.forward(opt_params)
-    pred = predict(params, stim)
-    loss_val = ce(pred, label, mask)
-    acc_val = accuracy(pred, label, mask)
-    return loss_val, acc_val
 
 
 
